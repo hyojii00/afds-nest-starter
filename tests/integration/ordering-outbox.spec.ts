@@ -13,7 +13,7 @@ import {
   orders,
 } from '@afds-nest-starter/ordering';
 import { eq } from 'drizzle-orm';
-import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterAll, assert, beforeAll, describe, expect, it, vi } from 'vitest';
 import { migrateDatabase, startPostgres } from '../support/postgres';
 
 describe('ordering persistence and transactional outbox', () => {
@@ -70,13 +70,13 @@ describe('ordering persistence and transactional outbox', () => {
     await repository.save(order);
     const first = await repository.findById(order.snapshot.id);
     const second = await repository.findById(order.snapshot.id);
-    expect(first).not.toBeNull();
-    expect(second).not.toBeNull();
+    assert(first);
+    assert(second);
 
-    first?.confirm();
-    second?.cancel('changed my mind');
-    await repository.save(first as Order);
-    await expect(repository.save(second as Order)).rejects.toThrow(OptimisticLockError);
+    first.confirm();
+    second.cancel('changed my mind');
+    await repository.save(first);
+    await expect(repository.save(second)).rejects.toThrow(OptimisticLockError);
   });
 
   it('publishes and marks a pending event', async () => {

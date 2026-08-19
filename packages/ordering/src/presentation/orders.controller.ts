@@ -5,7 +5,6 @@ import {
   Controller,
   Get,
   HttpCode,
-  Inject,
   NotFoundException,
   Param,
   ParseUUIDPipe,
@@ -17,16 +16,15 @@ import { OptimisticLockError, OrderNotFoundError } from '../application/ports';
 import { DomainValidationError, InvalidOrderStateError } from '../domain/errors';
 import type { OrderSnapshot } from '../domain/order';
 import { CancelOrderDto, CreateOrderDto } from './dtos';
-import { CANCEL_ORDER, CONFIRM_ORDER, CREATE_ORDER, GET_ORDER } from './tokens';
 
 @ApiTags('orders')
 @Controller('orders')
 export class OrdersController {
   constructor(
-    @Inject(CREATE_ORDER) private readonly createOrder: CreateOrder,
-    @Inject(GET_ORDER) private readonly getOrder: GetOrder,
-    @Inject(CONFIRM_ORDER) private readonly confirmOrder: ConfirmOrder,
-    @Inject(CANCEL_ORDER) private readonly cancelOrder: CancelOrder,
+    private readonly createOrder: CreateOrder,
+    private readonly getOrder: GetOrder,
+    private readonly confirmOrder: ConfirmOrder,
+    private readonly cancelOrder: CancelOrder,
   ) {}
 
   @Post()

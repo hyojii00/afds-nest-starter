@@ -1,4 +1,4 @@
-import { Injectable, ServiceUnavailableException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { drizzle, type NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
 
@@ -15,14 +15,6 @@ export class DatabaseService {
 
     this.pool = new Pool({ connectionString });
     this.db = drizzle(this.pool);
-  }
-
-  async assertReady(): Promise<void> {
-    try {
-      await this.pool.query('select 1');
-    } catch {
-      throw new ServiceUnavailableException('database is not ready');
-    }
   }
 
   async close(): Promise<void> {

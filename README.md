@@ -7,6 +7,7 @@ The repository intentionally implements one small ordering flow. Its purpose is 
 ## What this demonstrates
 
 - A pnpm workspace with explicit application and bounded-context boundaries.
+- A Fastify HTTP adapter, Terminus health checks, and SWC production builds.
 - A framework-free `Order` aggregate with tested invariants.
 - Atomic order persistence and integration-event creation through a PostgreSQL Transactional Outbox.
 - A separately runnable Outbox worker with retry, stale-lock recovery, and at-least-once delivery semantics.
@@ -46,7 +47,7 @@ Run `pnpm dev:worker` in a second terminal. Open `http://localhost:3000/docs` fo
 pnpm verify
 ```
 
-This runs formatting, linting, dependency-boundary checks, type checking, unit tests, Docker-backed integration and E2E tests, AFDS document validation, and the production build. See [CONTRIBUTING.md](CONTRIBUTING.md) for focused commands.
+This runs formatting, linting, dependency-boundary checks, TypeScript declaration checking, unit tests, Docker-backed integration and E2E tests, AFDS document validation, and the SWC production build. See [CONTRIBUTING.md](CONTRIBUTING.md) for focused commands.
 
 ## How AI fits
 

@@ -14,6 +14,8 @@ flowchart LR
 
 The ordering domain and application layers are framework-free. Presentation and persistence adapters may depend inward. Platform provides generic database lifecycle and Outbox relay behavior and must never depend on ordering.
 
+The API uses NestJS with the Fastify adapter. Nest Terminus owns the liveness and PostgreSQL readiness response contract. TypeScript performs type and declaration checks, while SWC emits production JavaScript for every workspace package and application.
+
 ## Command and event flow
 
 ```mermaid

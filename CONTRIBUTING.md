@@ -19,6 +19,7 @@ Use the narrowest relevant command while developing:
 - `pnpm test:integration` for PostgreSQL, transactions, optimistic locking, and Outbox delivery.
 - `pnpm test:e2e` for HTTP contracts, health, and OpenAPI.
 - `pnpm check:boundaries` for dependency direction.
+- `pnpm typecheck` for TypeScript declarations and `pnpm build` for SWC output.
 - `pnpm validate:docs` for AFDS owners, links, ADR identifiers, and Mermaid syntax.
 
 Run `pnpm verify` before opening or updating a pull request. Docker must be available for the integration and E2E suites.

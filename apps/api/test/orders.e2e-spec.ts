@@ -1,4 +1,5 @@
 import type { INestApplication } from '@nestjs/common';
+import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify';
 import type { StartedPostgreSqlContainer } from '@testcontainers/postgresql';
 import { Test } from '@nestjs/testing';
 import request from 'supertest';
@@ -17,9 +18,10 @@ describe('orders API', () => {
 
     const { AppModule } = await import('../src/app.module');
     const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
-    app = moduleRef.createNestApplication();
+    app = moduleRef.createNestApplication<NestFastifyApplication>(new FastifyAdapter());
     configureApplication(app);
     await app.init();
+    await app.getHttpAdapter().getInstance().ready();
   });
 
   afterAll(async () => {
@@ -81,8 +83,10 @@ describe('orders API', () => {
       cancellationReason: 'Customer request',
     });
 
-    await request(app.getHttpServer()).get('/health/live').expect(200, { status: 'ok' });
-    await request(app.getHttpServer()).get('/health/ready').expect(200, { status: 'ok' });
+    const live = await request(app.getHttpServer()).get('/health/live').expect(200);
+    expect(live.body).toMatchObject({ status: 'ok', info: { application: { status: 'up' } } });
+    const ready = await request(app.getHttpServer()).get('/health/ready').expect(200);
+    expect(ready.body).toMatchObject({ status: 'ok', info: { database: { status: 'up' } } });
     await request(app.getHttpServer()).get('/docs-json').expect(200);
   });
 });

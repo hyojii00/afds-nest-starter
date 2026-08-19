@@ -1,10 +1,14 @@
 import { Module } from '@nestjs/common';
 import { DatabaseModule, DatabaseService } from '@afds-nest-starter/platform';
-import { ORDER_REPOSITORY, ORDER_UNIT_OF_WORK } from './application/ports';
+import {
+  ORDER_REPOSITORY,
+  ORDER_UNIT_OF_WORK,
+  type OrderRepository,
+  type OrderUnitOfWork,
+} from './application/ports';
 import { CancelOrder, ConfirmOrder, CreateOrder, GetOrder } from './application/use-cases';
 import { DrizzleOrderRepository } from './infrastructure/persistence/drizzle-order.repository';
 import { OrdersController } from './presentation/orders.controller';
-import { CANCEL_ORDER, CONFIRM_ORDER, CREATE_ORDER, GET_ORDER } from './presentation/tokens';
 
 @Module({
   imports: [DatabaseModule],
@@ -18,24 +22,24 @@ import { CANCEL_ORDER, CONFIRM_ORDER, CREATE_ORDER, GET_ORDER } from './presenta
     { provide: ORDER_REPOSITORY, useExisting: DrizzleOrderRepository },
     { provide: ORDER_UNIT_OF_WORK, useExisting: DrizzleOrderRepository },
     {
-      provide: CREATE_ORDER,
-      useFactory: (unitOfWork: DrizzleOrderRepository) => new CreateOrder(unitOfWork),
+      provide: CreateOrder,
+      useFactory: (unitOfWork: OrderUnitOfWork) => new CreateOrder(unitOfWork),
       inject: [ORDER_UNIT_OF_WORK],
     },
     {
-      provide: GET_ORDER,
-      useFactory: (repository: DrizzleOrderRepository) => new GetOrder(repository),
+      provide: GetOrder,
+      useFactory: (repository: OrderRepository) => new GetOrder(repository),
       inject: [ORDER_REPOSITORY],
     },
     {
-      provide: CONFIRM_ORDER,
-      useFactory: (repository: DrizzleOrderRepository, unitOfWork: DrizzleOrderRepository) =>
+      provide: ConfirmOrder,
+      useFactory: (repository: OrderRepository, unitOfWork: OrderUnitOfWork) =>
         new ConfirmOrder(repository, unitOfWork),
       inject: [ORDER_REPOSITORY, ORDER_UNIT_OF_WORK],
     },
     {
-      provide: CANCEL_ORDER,
-      useFactory: (repository: DrizzleOrderRepository, unitOfWork: DrizzleOrderRepository) =>
+      provide: CancelOrder,
+      useFactory: (repository: OrderRepository, unitOfWork: OrderUnitOfWork) =>
         new CancelOrder(repository, unitOfWork),
       inject: [ORDER_REPOSITORY, ORDER_UNIT_OF_WORK],
     },

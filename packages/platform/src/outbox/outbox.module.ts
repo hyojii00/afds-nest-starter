@@ -13,6 +13,5 @@ import { OutboxRunnerService } from './outbox-runner.service';
     OutboxRelayService,
     OutboxRunnerService,
   ],
-  exports: [OutboxRelayService],
 })
 export class OutboxModule {}

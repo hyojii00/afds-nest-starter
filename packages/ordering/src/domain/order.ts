@@ -81,11 +81,11 @@ export class Order {
   }
 
   static rehydrate(snapshot: OrderSnapshot): Order {
-    return new Order(freezeSnapshot(snapshot), snapshot.version);
+    return new Order(copySnapshot(snapshot), snapshot.version);
   }
 
   get snapshot(): OrderSnapshot {
-    return freezeSnapshot(this.state);
+    return copySnapshot(this.state);
   }
 
   get originalVersion(): number | null {
@@ -165,6 +165,6 @@ function validateItem(item: OrderItemSnapshot): OrderItemSnapshot {
   return { sku, quantity: item.quantity, unitPriceMinor: item.unitPriceMinor };
 }
 
-function freezeSnapshot(snapshot: OrderSnapshot): OrderSnapshot {
+function copySnapshot(snapshot: OrderSnapshot): OrderSnapshot {
   return { ...snapshot, items: snapshot.items.map((item) => ({ ...item })) };
 }

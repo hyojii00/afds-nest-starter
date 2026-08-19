@@ -18,6 +18,6 @@ Order items, customer, currency, and total are immutable after creation. Authent
 
 ## Operational endpoints
 
-- `GET /health/live` reports process liveness without checking dependencies.
-- `GET /health/ready` checks PostgreSQL and returns `503` while unavailable.
+- `GET /health/live` returns the Nest Terminus health envelope and reports process liveness without checking dependencies.
+- `GET /health/ready` returns the Nest Terminus health envelope, checks PostgreSQL, and returns `503` while unavailable.
 - `/docs` and `/docs-json` expose the Swagger UI and OpenAPI document.

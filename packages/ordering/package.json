@@ -10,6 +10,10 @@
       "default": "./dist/index.js"
     }
   },
+  "scripts": {
+    "build": "swc src --out-dir dist --strip-leading-paths --config-file ../../.swcrc",
+    "build:watch": "swc src --out-dir dist --strip-leading-paths --config-file ../../.swcrc --watch"
+  },
   "dependencies": {
     "@afds-nest-starter/platform": "workspace:*",
     "@nestjs/common": "11.2.1",

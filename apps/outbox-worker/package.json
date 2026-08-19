@@ -2,10 +2,12 @@
   "name": "@afds-nest-starter/outbox-worker",
   "version": "0.1.0",
   "private": true,
-  "main": "dist/main.js",
+  "main": "dist/src/main.js",
   "scripts": {
-    "dev": "node --watch dist/main.js",
-    "start": "node dist/main.js"
+    "build": "nest build",
+    "build:watch": "nest build --watch",
+    "dev": "node --watch dist/src/main.js",
+    "start": "node dist/src/main.js"
   },
   "dependencies": {
     "@afds-nest-starter/platform": "workspace:*",
