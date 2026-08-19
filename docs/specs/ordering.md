@@ -16,6 +16,12 @@ Money is represented in integer minor units. The aggregate calculates the total 
 
 Order items, customer, currency, and total are immutable after creation. Authentication, payment, inventory, shipping, idempotency keys, and post-confirmation cancellation are outside the current contract.
 
+## Integration event projection
+
+The Outbox worker publishes versioned integration-event envelopes to the configured Kafka topic with the aggregate ID as the record key. An Outbox row becomes `PUBLISHED` only after broker acknowledgement; failed attempts retain the existing retry and terminal-failure behavior.
+
+The order-activity consumer processes `ordering.order.created.v1` and records the event ID, order ID, customer ID, currency, total minor amount, and occurrence time. The event ID uniquely identifies a projection row, so receiving the same event more than once does not create duplicates. Other event types are acknowledged without adding an order-activity row. An invalid `ordering.order.created.v1` payload is not acknowledged and remains available for Kafka redelivery.
+
 ## Operational endpoints
 
 - `GET /health/live` returns the Nest Terminus health envelope and reports process liveness without checking dependencies.

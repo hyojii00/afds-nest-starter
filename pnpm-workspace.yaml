@@ -6,6 +6,7 @@ autoInstallPeers: false
 
 allowBuilds:
   '@biomejs/biome': true
+  '@confluentinc/kafka-javascript': true
   '@scarf/scarf': false
   '@swc/core': true
   cpu-features: true

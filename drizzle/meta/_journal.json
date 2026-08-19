@@ -8,6 +8,13 @@
       "when": 1787125251573,
       "tag": "0000_nebulous_virginia_dare",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1787129478843,
+      "tag": "0001_happy_pixie",
+      "breakpoints": true
     }
   ]
 }

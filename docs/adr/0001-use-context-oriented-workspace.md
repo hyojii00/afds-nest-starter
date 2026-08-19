@@ -9,7 +9,7 @@ The starter must show DDD boundaries clearly while keeping one example understan
 
 ## Decision
 
-Use four packages: API, Outbox worker, ordering context, and platform. Keep domain, application, infrastructure, and presentation as internal ordering layers and enforce their direction statically.
+Use separate application workspaces for the API, Outbox worker, and independently runnable consumers. Keep the ordering context and platform infrastructure in package workspaces. Domain, application, infrastructure, and presentation remain internal ordering layers with statically enforced dependency direction.
 
 ## Alternatives
 

@@ -11,6 +11,8 @@ Persisting an order and publishing its event as unrelated operations can lose an
 
 Store versioned integration-event envelopes in PostgreSQL in the same transaction as each order change. Run a separate worker that claims rows with `FOR UPDATE SKIP LOCKED`, publishes through a port, and records success or retry state.
 
+The selected broker adapter is recorded separately in [ADR 0004](0004-use-kafka-for-integration-events.md); the Outbox contract remains independent of that choice.
+
 ## Alternatives
 
 - In-process events alone were simple but disappeared on process failure.

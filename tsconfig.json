@@ -4,6 +4,7 @@
     { "path": "packages/platform" },
     { "path": "packages/ordering" },
     { "path": "apps/api" },
-    { "path": "apps/outbox-worker" }
+    { "path": "apps/outbox-worker" },
+    { "path": "apps/order-activity-consumer" }
   ]
 }

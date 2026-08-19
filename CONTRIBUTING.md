@@ -2,7 +2,7 @@
 
 ## Setup
 
-Use Node.js `24.19.0` and pnpm `11.22.0`. Copy `.env.example` to `.env`, start PostgreSQL with `docker compose up -d postgres`, and run `pnpm db:migrate`.
+Use Node.js `24.19.0` and pnpm `11.22.0`. Copy `.env.example` to `.env`, start PostgreSQL and Kafka with `docker compose up -d --wait postgres kafka`, and run `pnpm db:migrate`.
 
 ## Change policy
 
@@ -16,7 +16,7 @@ Use Node.js `24.19.0` and pnpm `11.22.0`. Copy `.env.example` to `.env`, start P
 Use the narrowest relevant command while developing:
 
 - `pnpm test:unit` for domain and application behavior.
-- `pnpm test:integration` for PostgreSQL, transactions, optimistic locking, and Outbox delivery.
+- `pnpm test:integration` for PostgreSQL, transactions, optimistic locking, Kafka delivery, and projection idempotency.
 - `pnpm test:e2e` for HTTP contracts, health, and OpenAPI.
 - `pnpm check:boundaries` for dependency direction.
 - `pnpm typecheck` for TypeScript declarations and `pnpm build` for SWC output.

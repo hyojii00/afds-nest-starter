@@ -10,7 +10,8 @@ The repository intentionally implements one small ordering flow. Its purpose is 
 - A Fastify HTTP adapter, Terminus health checks, and SWC production builds.
 - A framework-free `Order` aggregate with tested invariants.
 - Atomic order persistence and integration-event creation through a PostgreSQL Transactional Outbox.
-- A separately runnable Outbox worker with retry, stale-lock recovery, and at-least-once delivery semantics.
+- A separately runnable Outbox worker that publishes to Kafka with retry, stale-lock recovery, and at-least-once delivery semantics.
+- An independently runnable Kafka consumer that maintains an idempotent `order_activity` projection.
 - AFDS owner documents that separate durable truth from temporary AI sessions and task logs.
 - A verification loop that treats AI output as untrusted until code, tests, documentation, and dependency rules agree.
 
@@ -19,7 +20,8 @@ The repository intentionally implements one small ordering flow. Its purpose is 
 | Path | Responsibility |
 | --- | --- |
 | `apps/api` | NestJS HTTP bootstrap, health checks, validation, and OpenAPI |
-| `apps/outbox-worker` | Independently runnable Outbox relay process |
+| `apps/outbox-worker` | Independently runnable Outbox relay and Kafka publisher |
+| `apps/order-activity-consumer` | Kafka consumer and idempotent order-activity projection |
 | `packages/ordering` | Ordering bounded context and its adapters |
 | `packages/platform` | PostgreSQL lifecycle and generic Outbox infrastructure |
 
@@ -34,12 +36,12 @@ fnm use --install-if-missing
 corepack enable
 pnpm install --frozen-lockfile
 cp .env.example .env
-docker compose up -d postgres
+docker compose up -d --wait postgres kafka
 pnpm db:migrate
 pnpm dev:api
 ```
 
-Run `pnpm dev:worker` in a second terminal. Open `http://localhost:3000/docs` for Swagger UI or use the documented endpoints under `/api/v1/orders`.
+Run `pnpm dev:worker` and `pnpm dev:consumer` in separate terminals. Open `http://localhost:3000/docs` for Swagger UI or use the documented endpoints under `/api/v1/orders`.
 
 ## Verification
 
@@ -63,7 +65,7 @@ The full protocol is owned by [AI-assisted development](docs/guidelines/ai-assis
 
 ## Scope boundaries
 
-This starter does not include authentication, payments, inventory, shipping, a message broker, event sourcing, full CQRS, cloud deployment, or runtime LLM features. These would obscure the architecture being demonstrated and should be introduced only for a concrete requirement.
+This starter does not include authentication, payments, inventory, shipping, event sourcing, full CQRS, cloud deployment, or runtime LLM features. These would obscure the architecture being demonstrated and should be introduced only for a concrete requirement.
 
 ## License
 
