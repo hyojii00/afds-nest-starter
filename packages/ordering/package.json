@@ -1,0 +1,21 @@
+{
+  "name": "@afds-nest-starter/ordering",
+  "version": "0.1.0",
+  "private": true,
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "dependencies": {
+    "@afds-nest-starter/platform": "workspace:*",
+    "@nestjs/common": "11.2.1",
+    "@nestjs/swagger": "11.4.7",
+    "class-transformer": "0.5.1",
+    "class-validator": "0.14.4",
+    "drizzle-orm": "0.45.2"
+  }
+}
