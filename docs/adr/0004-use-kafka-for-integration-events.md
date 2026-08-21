@@ -11,7 +11,7 @@ The Outbox relay previously ended at a console publisher, so it demonstrated per
 
 Publish Outbox envelopes to Kafka through an adapter owned by the Outbox worker. Use the configured topic, key records by aggregate ID, require broker acknowledgement, and retain the relay's at-least-once behavior.
 
-Run a separate order-activity consumer group that writes a PostgreSQL projection. Commit each Kafka offset only after the database write succeeds and use the event ID as the projection primary key so repeated delivery is idempotent. Use Apache Kafka's official single-node KRaft image for local development and the Confluent JavaScript client for Node.js applications.
+Run a separate order-activity consumer group that writes a PostgreSQL projection. Commit each Kafka offset only after the database write succeeds and use the event ID as the projection primary key so repeated delivery is idempotent. Log invalid owned events with their topic, partition, and offset, then leave them uncommitted for deliberate operator recovery; automated dead-letter handling is outside this starter's scope. Use Apache Kafka's official single-node KRaft image for local development and the Confluent JavaScript client for Node.js applications.
 
 ## Alternatives
 
@@ -21,4 +21,4 @@ Run a separate order-activity consumer group that writes a PostgreSQL projection
 
 ## Consequences
 
-Local development now requires Kafka in addition to PostgreSQL. Delivery remains at least once across the Outbox and consumer boundaries, so consumers must be idempotent. The consumer requests topic creation to support either local process start order. The local single-node broker is not highly available, and production deployments must own replication, security, monitoring, and topic policy. Versioned JSON envelopes avoid a schema-registry dependency in this starter but require consumer-side validation.
+Local development now requires Kafka in addition to PostgreSQL. Delivery remains at least once across the Outbox and consumer boundaries, so consumers must be idempotent. The consumer requests topic creation to support either local process start order. An invalid owned event blocks its partition until an operator resolves or skips it, which trades automation for a smaller and explicit failure policy. The local single-node broker is not highly available, and production deployments must own replication, security, monitoring, dead-letter policy, and topic policy. Versioned JSON envelopes avoid a schema-registry dependency in this starter but require consumer-side validation.

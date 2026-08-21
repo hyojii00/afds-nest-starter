@@ -20,7 +20,7 @@ Edit the owning Drizzle schema, run `pnpm db:generate`, inspect the generated SQ
 
 ## Outbox recovery
 
-The worker automatically returns stale `PROCESSING` rows to `PENDING` after `OUTBOX_LOCK_TIMEOUT_MS`. Transient failures receive exponential backoff capped at 60 seconds. Rows become `FAILED` after `OUTBOX_MAX_ATTEMPTS` and remain durable for diagnosis.
+The worker automatically returns stale `PROCESSING` rows to `PENDING` after `OUTBOX_LOCK_TIMEOUT_MS`. Transient failures receive exponential backoff capped at 60 seconds. Rows become `FAILED` after `OUTBOX_MAX_ATTEMPTS` and remain durable for diagnosis. A retrying or failed row blocks later versions of the same aggregate while unrelated aggregates continue. Reclaimed attempts are fenced by their incrementing attempt number, although duplicate Kafka records remain possible and safe only for idempotent consumers.
 
 Before manually retrying a failed event, verify whether the destination already processed its event ID. After correction, set the row to `PENDING`, clear `locked_at`, set `available_at` to the current time, and retain `attempts` and `last_error` as evidence. This manual database operation is intentionally not automated in the starter.
 
@@ -33,7 +33,32 @@ docker compose exec kafka /opt/kafka/bin/kafka-topics.sh --bootstrap-server loca
 docker compose exec kafka /opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --describe --topic ordering.events
 ```
 
-The worker waits for broker acknowledgement before marking an Outbox row as published. The consumer writes the projection before committing its Kafka offset. Restart either process after a transient failure; duplicate event delivery is safe because `order_activity.event_id` is unique. Inspect and correct an invalid owned event before resetting consumer offsets manually.
+The worker waits for broker acknowledgement before marking an Outbox row as published. The consumer writes the projection before committing its Kafka offset. Restart either process after a transient failure; duplicate event delivery is safe because `order_activity.event_id` is unique.
+
+An invalid owned event emits `integration_event_processing_failed` with its topic, partition, and offset and remains uncommitted. Kafka records are immutable, so they cannot be corrected in place. Stop the consumer and inspect the exact record reported by the log:
+
+```bash
+docker compose exec kafka /opt/kafka/bin/kafka-console-consumer.sh \
+  --bootstrap-server localhost:9092 \
+  --topic ordering.events \
+  --partition <partition> \
+  --offset <offset> \
+  --max-messages 1
+```
+
+Prefer deploying a compatible handler and restarting the consumer at the same uncommitted offset. If the projection can intentionally omit the event, record the impact and advance only this consumer group to the next offset while the consumer is stopped:
+
+```bash
+docker compose exec kafka /opt/kafka/bin/kafka-consumer-groups.sh \
+  --bootstrap-server localhost:9092 \
+  --group order-activity \
+  --topic ordering.events:<partition> \
+  --reset-offsets \
+  --to-offset <next-offset> \
+  --execute
+```
+
+Use the configured topic and group names when they differ from `.env.example`. Skipping loses this projection for the group and is intentionally never automatic in the starter.
 
 ## Stop and reset
 

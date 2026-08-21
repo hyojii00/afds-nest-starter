@@ -1,5 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { and, asc, eq, inArray, lt, lte, sql } from 'drizzle-orm';
+import { and, asc, eq, inArray, lt, lte, ne, notExists, sql } from 'drizzle-orm';
+import { alias } from 'drizzle-orm/pg-core';
 import { DatabaseService } from '../database/database.service';
 import {
   EVENT_PUBLISHER,
@@ -7,6 +8,8 @@ import {
   type IntegrationEventEnvelope,
 } from './event-publisher';
 import { outboxEvents, type OutboxEventRow } from './schema';
+
+const earlierOutboxEvent = alias(outboxEvents, 'earlier_outbox_event');
 
 export interface RelayOptions {
   readonly batchSize: number;
@@ -46,8 +49,30 @@ export class OutboxRelayService {
       const claimed = await transaction
         .select()
         .from(outboxEvents)
-        .where(and(eq(outboxEvents.status, 'PENDING'), lte(outboxEvents.availableAt, now)))
-        .orderBy(asc(outboxEvents.createdAt))
+        .where(
+          and(
+            eq(outboxEvents.status, 'PENDING'),
+            lte(outboxEvents.availableAt, now),
+            notExists(
+              transaction
+                .select({ id: earlierOutboxEvent.id })
+                .from(earlierOutboxEvent)
+                .where(
+                  and(
+                    eq(earlierOutboxEvent.aggregateType, outboxEvents.aggregateType),
+                    eq(earlierOutboxEvent.aggregateId, outboxEvents.aggregateId),
+                    lt(earlierOutboxEvent.aggregateVersion, outboxEvents.aggregateVersion),
+                    ne(earlierOutboxEvent.status, 'PUBLISHED'),
+                  ),
+                ),
+            ),
+          ),
+        )
+        .orderBy(
+          asc(outboxEvents.createdAt),
+          asc(outboxEvents.aggregateVersion),
+          asc(outboxEvents.id),
+        )
         .limit(batchSize)
         .for('update', { skipLocked: true });
 
@@ -80,7 +105,13 @@ export class OutboxRelayService {
       await this.database.db
         .update(outboxEvents)
         .set({ status: 'PUBLISHED', publishedAt: new Date(), lockedAt: null, lastError: null })
-        .where(and(eq(outboxEvents.id, event.id), eq(outboxEvents.status, 'PROCESSING')));
+        .where(
+          and(
+            eq(outboxEvents.id, event.id),
+            eq(outboxEvents.status, 'PROCESSING'),
+            eq(outboxEvents.attempts, event.attempts),
+          ),
+        );
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       const failed = event.attempts >= maxAttempts;
@@ -94,7 +125,13 @@ export class OutboxRelayService {
           lockedAt: null,
           lastError: message.slice(0, 4_000),
         })
-        .where(and(eq(outboxEvents.id, event.id), eq(outboxEvents.status, 'PROCESSING')));
+        .where(
+          and(
+            eq(outboxEvents.id, event.id),
+            eq(outboxEvents.status, 'PROCESSING'),
+            eq(outboxEvents.attempts, event.attempts),
+          ),
+        );
 
       this.logger.error(
         JSON.stringify({

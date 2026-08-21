@@ -9,8 +9,9 @@ import {
   outboxEvents,
 } from '@afds-nest-starter/platform';
 import { DrizzleOrderRepository, Order } from '@afds-nest-starter/ordering';
+import { Logger } from '@nestjs/common';
 import { eq } from 'drizzle-orm';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { OrderActivityConsumer } from '../../apps/order-activity-consumer/src/order-activity.consumer';
 import { OrderActivityProjector } from '../../apps/order-activity-consumer/src/order-activity.projector';
 import { orderActivity } from '../../apps/order-activity-consumer/src/schema';
@@ -39,6 +40,8 @@ describe('Kafka Outbox to order activity projection', () => {
     database = new DatabaseService();
     publisher = new KafkaEventPublisher();
     await publisher.onModuleInit();
+    consumer = new OrderActivityConsumer(new OrderActivityProjector(database));
+    await consumer.onModuleInit();
   });
 
   afterAll(async () => {
@@ -49,9 +52,6 @@ describe('Kafka Outbox to order activity projection', () => {
   });
 
   it('publishes, projects, commits, and deduplicates an order-created event', async () => {
-    consumer = new OrderActivityConsumer(new OrderActivityProjector(database));
-    await consumer.onModuleInit();
-
     const order = Order.create({
       id: randomUUID(),
       customerId: 'customer-1',
@@ -102,6 +102,45 @@ describe('Kafka Outbox to order activity projection', () => {
     ]);
   });
 
+  it('logs a poison event and leaves its offset uncommitted', async () => {
+    const committedBefore = await readCommittedOffset();
+    const logError = vi.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
+    const poisonEvent: IntegrationEventEnvelope = {
+      eventId: randomUUID(),
+      eventType: 'ordering.order.created.v1',
+      aggregateType: 'order',
+      aggregateId: randomUUID(),
+      aggregateVersion: 1,
+      occurredAt: new Date().toISOString(),
+      payload: { customerId: '' },
+    };
+
+    try {
+      await publisher.publish(poisonEvent);
+      await waitFor(async () =>
+        logError.mock.calls.some(([entry]) => {
+          if (typeof entry !== 'string') {
+            return false;
+          }
+          try {
+            const logged = JSON.parse(entry) as Record<string, unknown>;
+            return (
+              logged.message === 'integration_event_processing_failed' &&
+              logged.topic === topic &&
+              logged.partition === 0 &&
+              logged.offset === String(committedBefore)
+            );
+          } catch {
+            return false;
+          }
+        }),
+      );
+      expect(await readCommittedOffset()).toBe(committedBefore);
+    } finally {
+      logError.mockRestore();
+    }
+  });
+
   async function waitForCommittedOffset(expected: number): Promise<void> {
     const admin = new KafkaJS.Kafka({
       kafkaJS: { brokers: [broker], logLevel: KafkaJS.logLevel.ERROR },
@@ -112,6 +151,19 @@ describe('Kafka Outbox to order activity projection', () => {
         const offsets = await admin.fetchOffsets({ groupId, topics: [topic] });
         return Number(offsets[0]?.partitions[0]?.offset ?? 0) >= expected;
       });
+    } finally {
+      await admin.disconnect();
+    }
+  }
+
+  async function readCommittedOffset(): Promise<number> {
+    const admin = new KafkaJS.Kafka({
+      kafkaJS: { brokers: [broker], logLevel: KafkaJS.logLevel.ERROR },
+    }).admin();
+    await admin.connect();
+    try {
+      const offsets = await admin.fetchOffsets({ groupId, topics: [topic] });
+      return Number(offsets[0]?.partitions[0]?.offset ?? 0);
     } finally {
       await admin.disconnect();
     }

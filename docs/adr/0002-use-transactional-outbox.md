@@ -9,7 +9,7 @@ Persisting an order and publishing its event as unrelated operations can lose an
 
 ## Decision
 
-Store versioned integration-event envelopes in PostgreSQL in the same transaction as each order change. Run a separate worker that claims rows with `FOR UPDATE SKIP LOCKED`, publishes through a port, and records success or retry state.
+Store versioned integration-event envelopes in PostgreSQL in the same transaction as each order change. Run a separate worker that claims rows with `FOR UPDATE SKIP LOCKED`, publishes through a port, and records success or retry state. Claim only aggregate heads whose lower versions are all published, and use the incrementing attempt number as a fencing token when recording completion.
 
 The selected broker adapter is recorded separately in [ADR 0004](0004-use-kafka-for-integration-events.md); the Outbox contract remains independent of that choice.
 
@@ -21,4 +21,4 @@ The selected broker adapter is recorded separately in [ADR 0004](0004-use-kafka-
 
 ## Consequences
 
-The database is the durable handoff boundary and the API does not wait for external delivery. Delivery is at least once, so consumers must deduplicate event IDs. Failed and stale rows require monitoring and operational recovery.
+The database is the durable handoff boundary and the API does not wait for external delivery. Delivery is at least once, so consumers must deduplicate event IDs. A retrying or failed event delays later versions of the same aggregate but not other aggregates. Attempt fencing protects Outbox state from an expired relay, but it cannot prevent duplicate broker records. Failed and stale rows require monitoring and operational recovery.
