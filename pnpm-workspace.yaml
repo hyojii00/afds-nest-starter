@@ -4,6 +4,12 @@ packages:
 
 autoInstallPeers: false
 
+# Keep SWC watch on its supported peer without replacing Nest/Angular's Chokidar 4.
+packageExtensions:
+  '@swc/cli@0.8.1':
+    dependencies:
+      chokidar: 5.0.0
+
 allowBuilds:
   '@biomejs/biome': true
   '@confluentinc/kafka-javascript': true
