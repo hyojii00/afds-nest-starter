@@ -80,7 +80,7 @@ AI can explore, propose, implement, and review, but repository-owned requirement
 4. Run the narrowest meaningful check, use exact failures as feedback, and repeat.
 5. Review the final diff and report AI scope, human decisions, validation, and documentation impact.
 
-The full protocol is owned by [AI-assisted development](docs/guidelines/ai-assisted-development.md). Raw prompt transcripts, temporary plans, and validation logs do not become durable repository truth.
+The full protocol is owned by [AI-assisted development](docs/guidelines/ai-assisted-development.md). See [portfolio-readiness PR #2](https://github.com/hyojii00/afds-nest-starter/pull/2) for a concrete issue-to-PR example with AI scope, human decisions, validation, and residual risk. Raw prompt transcripts, temporary plans, and validation logs do not become durable repository truth.
 
 ## Scope boundaries
 
