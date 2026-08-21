@@ -14,6 +14,7 @@
     "dev:api": "pnpm build && concurrently --kill-others --names types,platform,ordering,api-build,api \"tsc -b --watch --emitDeclarationOnly --preserveWatchOutput\" \"pnpm --filter @afds-nest-starter/platform build:watch\" \"pnpm --filter @afds-nest-starter/ordering build:watch\" \"pnpm --filter @afds-nest-starter/api build:watch\" \"pnpm --filter @afds-nest-starter/api dev\"",
     "dev:worker": "pnpm build && concurrently --kill-others --names types,platform,worker-build,worker \"tsc -b --watch --emitDeclarationOnly --preserveWatchOutput\" \"pnpm --filter @afds-nest-starter/platform build:watch\" \"pnpm --filter @afds-nest-starter/outbox-worker build:watch\" \"pnpm --filter @afds-nest-starter/outbox-worker dev\"",
     "dev:consumer": "pnpm build && concurrently --kill-others --names types,platform,consumer-build,consumer \"tsc -b --watch --emitDeclarationOnly --preserveWatchOutput\" \"pnpm --filter @afds-nest-starter/platform build:watch\" \"pnpm --filter @afds-nest-starter/order-activity-consumer build:watch\" \"pnpm --filter @afds-nest-starter/order-activity-consumer dev\"",
+    "demo": "node --env-file-if-exists=.env scripts/demo.mjs",
     "start:api": "pnpm --filter @afds-nest-starter/api start",
     "start:worker": "pnpm --filter @afds-nest-starter/outbox-worker start",
     "start:consumer": "pnpm --filter @afds-nest-starter/order-activity-consumer start",

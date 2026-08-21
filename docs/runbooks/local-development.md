@@ -1,5 +1,15 @@
 # Local Development Runbook
 
+## Architecture demo
+
+Run the complete API-to-projection path with one command:
+
+```bash
+pnpm demo
+```
+
+The command starts PostgreSQL and Kafka, applies migrations, builds with SWC, runs the API, worker, and consumer, creates an order, and waits for matching `PUBLISHED` Outbox and `order_activity` records. It stops the three application processes when finished but retains the Docker containers and database evidence. It requires port 3000, or the configured `PORT`, to be free.
+
 ## Start
 
 ```bash
@@ -13,6 +23,8 @@ pnpm dev:api
 ```
 
 Start `pnpm dev:worker` and `pnpm dev:consumer` in separate terminals. Check `/health/ready` before using the API.
+
+The Compose services bind PostgreSQL and unauthenticated development Kafka to `127.0.0.1` only. They are local tooling and must not be exposed as a production deployment.
 
 ## Schema changes
 
