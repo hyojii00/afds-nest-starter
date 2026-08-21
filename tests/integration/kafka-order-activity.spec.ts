@@ -117,8 +117,8 @@ describe('Kafka Outbox to order activity projection', () => {
 
     try {
       await publisher.publish(poisonEvent);
-      await waitFor(async () =>
-        logError.mock.calls.some(([entry]) => {
+      const matchingLogs = () =>
+        logError.mock.calls.filter(([entry]) => {
           if (typeof entry !== 'string') {
             return false;
           }
@@ -133,8 +133,10 @@ describe('Kafka Outbox to order activity projection', () => {
           } catch {
             return false;
           }
-        }),
-      );
+        });
+      await waitFor(async () => matchingLogs().length > 0);
+      await new Promise((resolve) => setTimeout(resolve, 1_200));
+      expect(matchingLogs()).toHaveLength(1);
       expect(await readCommittedOffset()).toBe(committedBefore);
     } finally {
       logError.mockRestore();

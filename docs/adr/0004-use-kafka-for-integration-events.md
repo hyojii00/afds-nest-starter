@@ -11,7 +11,7 @@ The Outbox relay previously ended at a console publisher, so it demonstrated per
 
 Publish Outbox envelopes to Kafka through an adapter owned by the Outbox worker. Use the configured topic, key records by aggregate ID, require broker acknowledgement, and retain the relay's at-least-once behavior.
 
-Run a separate order-activity consumer group that writes a PostgreSQL projection. Commit each Kafka offset only after the database write succeeds and use the event ID as the projection primary key so repeated delivery is idempotent. Log invalid owned events with their topic, partition, and offset, then leave them uncommitted for deliberate operator recovery; automated dead-letter handling is outside this starter's scope. Use Apache Kafka's official single-node KRaft image for local development and the Confluent JavaScript client for Node.js applications.
+Run a separate order-activity consumer group that writes a PostgreSQL projection. Commit each Kafka offset only after the database write succeeds and use the event ID as the projection primary key so repeated delivery is idempotent. On a processing failure, pause the affected partition after logging its topic, partition, and offset, then leave the record uncommitted for a deliberate restart or operator recovery; automated dead-letter handling is outside this starter's scope. Use Apache Kafka's official single-node KRaft image for local development and the Confluent JavaScript client for Node.js applications.
 
 ## Alternatives
 

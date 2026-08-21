@@ -46,23 +46,10 @@ try {
     OUTBOX_POLL_INTERVAL_MS: '200',
     PORT: String(port),
   };
-  const consumer = startApplication(
-    'consumer',
-    'apps/order-activity-consumer/dist/src/main.js',
-    runtimeEnvironment,
-  );
-  const worker = startApplication(
-    'worker',
-    'apps/outbox-worker/dist/src/main.js',
-    runtimeEnvironment,
-  );
+  startApplication('consumer', 'apps/order-activity-consumer/dist/src/main.js', runtimeEnvironment);
+  startApplication('worker', 'apps/outbox-worker/dist/src/main.js', runtimeEnvironment);
   startApplication('api', 'apps/api/dist/src/main.js', runtimeEnvironment);
 
-  await waitFor(
-    () => consumer.output.includes('Order activity consumer is running'),
-    'consumer startup',
-  );
-  await waitFor(() => worker.output.includes('Outbox worker is running'), 'worker startup');
   await waitFor(async () => {
     try {
       return (await fetch(`http://127.0.0.1:${port}/health/ready`)).ok;

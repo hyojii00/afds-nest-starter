@@ -1,5 +1,5 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { and, asc, eq, inArray, lt, lte, ne, notExists, sql } from 'drizzle-orm';
+import { and, asc, eq, gte, inArray, lt, lte, ne, notExists, sql } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
 import { DatabaseService } from '../database/database.service';
 import {
@@ -27,7 +27,11 @@ export class OutboxRelayService {
   ) {}
 
   async runOnce(options: RelayOptions): Promise<number> {
-    const events = await this.claimBatch(options.batchSize, options.lockTimeoutMs);
+    const events = await this.claimBatch(
+      options.batchSize,
+      options.maxAttempts,
+      options.lockTimeoutMs,
+    );
 
     for (const event of events) {
       await this.publishOne(event, options.maxAttempts);
@@ -36,15 +40,32 @@ export class OutboxRelayService {
     return events.length;
   }
 
-  private async claimBatch(batchSize: number, lockTimeoutMs: number): Promise<OutboxEventRow[]> {
+  private async claimBatch(
+    batchSize: number,
+    maxAttempts: number,
+    lockTimeoutMs: number,
+  ): Promise<OutboxEventRow[]> {
     return this.database.db.transaction(async (transaction) => {
       const now = new Date();
       const staleBefore = new Date(now.getTime() - lockTimeoutMs);
+      const staleClaim = and(
+        eq(outboxEvents.status, 'PROCESSING'),
+        lt(outboxEvents.lockedAt, staleBefore),
+      );
+
+      await transaction
+        .update(outboxEvents)
+        .set({
+          status: 'FAILED',
+          lockedAt: null,
+          lastError: 'processing lease expired after final attempt',
+        })
+        .where(and(staleClaim, gte(outboxEvents.attempts, maxAttempts)));
 
       await transaction
         .update(outboxEvents)
         .set({ status: 'PENDING', lockedAt: null })
-        .where(and(eq(outboxEvents.status, 'PROCESSING'), lt(outboxEvents.lockedAt, staleBefore)));
+        .where(and(staleClaim, lt(outboxEvents.attempts, maxAttempts)));
 
       const claimed = await transaction
         .select()

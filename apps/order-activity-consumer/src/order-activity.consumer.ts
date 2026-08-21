@@ -63,10 +63,12 @@ export class OrderActivityConsumer implements OnModuleInit, BeforeApplicationShu
     topic,
     partition,
     message,
+    pause,
   }: KafkaJS.EachMessagePayload): Promise<void> {
     try {
       await this.projector.project(decodeIntegrationEvent(message.value));
     } catch (error) {
+      pause();
       this.logger.error(
         JSON.stringify({
           message: 'integration_event_processing_failed',

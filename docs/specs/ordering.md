@@ -18,9 +18,9 @@ Order items, customer, currency, and total are immutable after creation. Authent
 
 ## Integration event projection
 
-The Outbox worker publishes versioned integration-event envelopes to the configured Kafka topic with the aggregate ID as the record key. An Outbox row becomes `PUBLISHED` only after broker acknowledgement. For one aggregate, a row is eligible only after every lower aggregate version is `PUBLISHED`; retryable, processing, and terminally failed predecessors block their successors. Other aggregates remain eligible. A reclaimed attempt increments the row's attempt number, which fences an expired relay from changing the new owner's state.
+The Outbox worker publishes versioned integration-event envelopes to the configured Kafka topic with the aggregate ID as the record key. An Outbox row becomes `PUBLISHED` only after broker acknowledgement. For one aggregate, a row is eligible only after every lower aggregate version is `PUBLISHED`; retryable, processing, and terminally failed predecessors block their successors. Other aggregates remain eligible.
 
-The order-activity consumer processes `ordering.order.created.v1` and records the event ID, order ID, customer ID, currency, total minor amount, and occurrence time. The event ID uniquely identifies a projection row, so receiving the same event more than once does not create duplicates. Other event types are acknowledged without adding an order-activity row. An invalid `ordering.order.created.v1` payload is logged with its topic, partition, and offset, is not acknowledged, and blocks that partition until an operator resolves or deliberately skips it. This starter does not automate a dead-letter path.
+The order-activity consumer processes `ordering.order.created.v1` and records the event ID, order ID, customer ID, currency, total minor amount, and occurrence time. The event ID uniquely identifies a projection row, so receiving the same event more than once does not create duplicates. Other event types are acknowledged without adding an order-activity row. An invalid `ordering.order.created.v1` payload is logged with its topic, partition, and offset, is not acknowledged, and pauses that partition after the first failure until an operator resolves or deliberately skips it and restarts the consumer. This starter does not automate a dead-letter path.
 
 ## Operational endpoints
 

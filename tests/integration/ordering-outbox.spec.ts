@@ -184,6 +184,28 @@ describe('ordering persistence and transactional outbox', () => {
     ]);
   });
 
+  it('fails a stale claim that already reached the attempt limit', async () => {
+    const order = makeOrder();
+    await repository.save(order);
+    await database.db
+      .update(outboxEvents)
+      .set({ status: 'PROCESSING', attempts: 3, lockedAt: new Date(0) })
+      .where(eq(outboxEvents.aggregateId, order.snapshot.id));
+    const publish = vi.fn<EventPublisher['publish']>().mockResolvedValue(undefined);
+    const relay = new OutboxRelayService(database, { publish });
+
+    expect(await relay.runOnce({ batchSize: 10, maxAttempts: 3, lockTimeoutMs: 60_000 })).toBe(0);
+    expect(publish).not.toHaveBeenCalled();
+    expect(await eventsFor(order.snapshot.id)).toMatchObject([
+      {
+        status: 'FAILED',
+        attempts: 3,
+        lockedAt: null,
+        lastError: 'processing lease expired after final attempt',
+      },
+    ]);
+  });
+
   it('prevents a stale relay from overwriting a reclaimed attempt', async () => {
     const order = makeOrder();
     await repository.save(order);
@@ -215,6 +237,22 @@ describe('ordering persistence and transactional outbox', () => {
     expect(await eventsFor(order.snapshot.id)).toMatchObject([
       { status: 'PUBLISHED', attempts: 2 },
     ]);
+  });
+
+  it('does not let simultaneous relays claim the same event', async () => {
+    const order = makeOrder();
+    await repository.save(order);
+    const firstPublish = vi.fn<EventPublisher['publish']>().mockResolvedValue(undefined);
+    const secondPublish = vi.fn<EventPublisher['publish']>().mockResolvedValue(undefined);
+    const options = { batchSize: 10, maxAttempts: 3, lockTimeoutMs: 60_000 };
+
+    const processed = await Promise.all([
+      new OutboxRelayService(database, { publish: firstPublish }).runOnce(options),
+      new OutboxRelayService(database, { publish: secondPublish }).runOnce(options),
+    ]);
+
+    expect(processed.reduce((total, count) => total + count, 0)).toBe(1);
+    expect(firstPublish.mock.calls.length + secondPublish.mock.calls.length).toBe(1);
   });
 
   it('does not let another relay claim a successor while the head is processing', async () => {

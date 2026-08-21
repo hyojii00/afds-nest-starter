@@ -32,7 +32,7 @@ Edit the owning Drizzle schema, run `pnpm db:generate`, inspect the generated SQ
 
 ## Outbox recovery
 
-The worker automatically returns stale `PROCESSING` rows to `PENDING` after `OUTBOX_LOCK_TIMEOUT_MS`. Transient failures receive exponential backoff capped at 60 seconds. Rows become `FAILED` after `OUTBOX_MAX_ATTEMPTS` and remain durable for diagnosis. A retrying or failed row blocks later versions of the same aggregate while unrelated aggregates continue. Reclaimed attempts are fenced by their incrementing attempt number, although duplicate Kafka records remain possible and safe only for idempotent consumers.
+The worker returns a stale `PROCESSING` row below `OUTBOX_MAX_ATTEMPTS` to `PENDING` after `OUTBOX_LOCK_TIMEOUT_MS`; a stale row at the limit becomes `FAILED`. Transient publish failures receive exponential backoff capped at 60 seconds. Failed rows remain durable for diagnosis and block later versions of the same aggregate while unrelated aggregates continue.
 
 Before manually retrying a failed event, verify whether the destination already processed its event ID. After correction, set the row to `PENDING`, clear `locked_at`, set `available_at` to the current time, and retain `attempts` and `last_error` as evidence. This manual database operation is intentionally not automated in the starter.
 
@@ -47,7 +47,7 @@ docker compose exec kafka /opt/kafka/bin/kafka-topics.sh --bootstrap-server loca
 
 The worker waits for broker acknowledgement before marking an Outbox row as published. The consumer writes the projection before committing its Kafka offset. Restart either process after a transient failure; duplicate event delivery is safe because `order_activity.event_id` is unique.
 
-An invalid owned event emits `integration_event_processing_failed` with its topic, partition, and offset and remains uncommitted. Kafka records are immutable, so they cannot be corrected in place. Stop the consumer and inspect the exact record reported by the log:
+A consumer processing failure emits `integration_event_processing_failed` with its topic, partition, and offset, pauses that partition after the first failure, and leaves the record uncommitted. Restore a transient dependency and restart the consumer to retry. Kafka records are immutable, so an invalid owned event cannot be corrected in place. Keep the consumer stopped and inspect the exact record reported by the log:
 
 ```bash
 docker compose exec kafka /opt/kafka/bin/kafka-console-consumer.sh \
@@ -71,6 +71,7 @@ docker compose exec kafka /opt/kafka/bin/kafka-consumer-groups.sh \
 ```
 
 Use the configured topic and group names when they differ from `.env.example`. Skipping loses this projection for the group and is intentionally never automatic in the starter.
+Restart the consumer after the offset reset.
 
 ## Stop and reset
 
