@@ -8,7 +8,7 @@ Run the complete API-to-projection path with one command:
 pnpm demo
 ```
 
-The command starts PostgreSQL and Kafka, applies migrations, builds with SWC, runs the API, worker, and consumer, creates an order, and waits for matching `PUBLISHED` Outbox and `order_activity` records. It stops the three application processes when finished but retains the Docker containers and database evidence. It requires port 3000, or the configured `PORT`, to be free.
+The command starts PostgreSQL and Kafka, applies migrations, builds with SWC, runs the API, worker, and consumer, creates an order, and waits for matching `PUBLISHED` Outbox and `order_activity` records. It always targets the loopback Compose database and broker even when `.env` contains other connection addresses. It stops the three application processes when finished but retains the Docker containers and database evidence. It requires port 3000, or the configured `PORT`, to be free.
 
 ## Start
 

@@ -6,8 +6,7 @@ import { Pool } from 'pg';
 
 const root = process.cwd();
 const port = Number(process.env.PORT ?? 3000);
-const databaseUrl =
-  process.env.DATABASE_URL ?? 'postgresql://afds:afds@localhost:5432/afds_nest_starter';
+const databaseUrl = 'postgresql://afds:afds@127.0.0.1:5432/afds_nest_starter';
 const applications = [];
 let activeCommand;
 let interrupted = false;
@@ -34,13 +33,16 @@ try {
     'postgres',
     'kafka',
   ]);
-  await step('Database migrations', 'pnpm', ['db:migrate']);
+  await step('Database migrations', 'pnpm', ['db:migrate'], {
+    ...process.env,
+    DATABASE_URL: databaseUrl,
+  });
   await step('SWC production build', 'pnpm', ['build']);
 
   const runtimeEnvironment = {
     ...process.env,
     DATABASE_URL: databaseUrl,
-    KAFKA_BROKERS: process.env.KAFKA_BROKERS ?? 'localhost:9092',
+    KAFKA_BROKERS: '127.0.0.1:9092',
     KAFKA_TOPIC: process.env.KAFKA_TOPIC ?? 'ordering.events',
     KAFKA_CONSUMER_GROUP_ID: 'order-activity.demo',
     OUTBOX_POLL_INTERVAL_MS: '200',
@@ -93,16 +95,16 @@ try {
   await stopApplications();
 }
 
-async function step(label, command, args) {
+async function step(label, command, args, environment = process.env) {
   process.stdout.write(`… ${label}\n`);
-  await run(command, args);
+  await run(command, args, environment);
   console.log(`✓ ${label}`);
 }
 
-async function run(command, args) {
+async function run(command, args, environment) {
   const child = spawn(command, args, {
     cwd: root,
-    env: process.env,
+    env: environment,
     stdio: ['ignore', 'pipe', 'pipe'],
   });
   activeCommand = child;
