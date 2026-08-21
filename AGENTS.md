@@ -25,6 +25,7 @@ This is the entry point for humans and AI agents working in this repository. Kee
 | Install | `pnpm install --frozen-lockfile` |
 | Start dependencies | `docker compose up -d --wait postgres kafka` |
 | Apply migrations | `pnpm db:migrate` |
+| Architecture demo | `pnpm demo` |
 | Start API / worker / consumer | `pnpm dev:api` / `pnpm dev:worker` / `pnpm dev:consumer` |
 | Focused tests | `pnpm test:unit`, `pnpm test:integration`, `pnpm test:e2e` |
 | Full verification | `pnpm verify` |

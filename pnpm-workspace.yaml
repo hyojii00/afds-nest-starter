@@ -13,27 +13,3 @@ allowBuilds:
   esbuild: true
   protobufjs: true
   ssh2: true
-
-minimumReleaseAgeExclude:
-  - '@vitest/expect@4.1.11'
-  - '@vitest/mocker@4.1.11'
-  - '@vitest/pretty-format@4.1.11'
-  - '@vitest/runner@4.1.11'
-  - '@vitest/snapshot@4.1.11'
-  - '@vitest/spy@4.1.11'
-  - '@vitest/utils@4.1.11'
-  - vitest@4.1.11
-  - '@swc/core-darwin-arm64@1.16.1'
-  - '@swc/core-darwin-x64@1.16.1'
-  - '@swc/core-linux-arm-gnueabihf@1.16.1'
-  - '@swc/core-linux-arm64-gnu@1.16.1'
-  - '@swc/core-linux-arm64-musl@1.16.1'
-  - '@swc/core-linux-ppc64-gnu@1.16.1'
-  - '@swc/core-linux-s390x-gnu@1.16.1'
-  - '@swc/core-linux-x64-gnu@1.16.1'
-  - '@swc/core-linux-x64-musl@1.16.1'
-  - '@swc/core-win32-arm64-msvc@1.16.1'
-  - '@swc/core-win32-ia32-msvc@1.16.1'
-  - '@swc/core-win32-x64-msvc@1.16.1'
-  - '@swc/core@1.16.1'
-  - fastify@5.12.1
