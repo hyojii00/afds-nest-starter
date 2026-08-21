@@ -60,6 +60,14 @@ describe('orders API', () => {
       .send({ customerId: '', currency: 'usd', items: [] })
       .expect(400);
     await request(app.getHttpServer())
+      .post('/api/v1/orders')
+      .send({
+        customerId: 'customer-1',
+        currency: 'USD',
+        items: [{ sku: 'BOOK-001', quantity: 2_147_483_648, unitPriceMinor: 0 }],
+      })
+      .expect(400);
+    await request(app.getHttpServer())
       .get('/api/v1/orders/00000000-0000-4000-8000-000000000000')
       .expect(404);
   });

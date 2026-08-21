@@ -2,7 +2,7 @@
 
 ## Create an order
 
-`POST /api/v1/orders` accepts a non-empty `customerId`, one three-letter uppercase currency code, and at least one item. Each item requires a non-empty SKU, a positive integer quantity, and a non-negative integer `unitPriceMinor`.
+`POST /api/v1/orders` accepts a non-empty `customerId`, one three-letter uppercase currency code, and at least one item. Each item requires a non-empty SKU, a quantity between 1 and 2,147,483,647, and a non-negative integer `unitPriceMinor`.
 
 Money is represented in integer minor units. The aggregate calculates the total and creates a `PENDING` order at version 1. The response is `201`; invalid input is `400`. The same transaction inserts `ordering.order.created.v1` into the Outbox.
 

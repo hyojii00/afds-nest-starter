@@ -33,6 +33,17 @@ describe('Order', () => {
     ).toThrow(DomainValidationError);
   });
 
+  it('rejects a quantity above the supported maximum', () => {
+    expect(() =>
+      Order.create({
+        customerId: 'customer-1',
+        currency: 'KRW',
+        items: [{ sku: 'coffee', quantity: 2_147_483_648, unitPriceMinor: 0 }],
+        now,
+      }),
+    ).toThrow(DomainValidationError);
+  });
+
   it('confirms a pending order exactly once', () => {
     const order = makeOrder();
     order.confirm(now);

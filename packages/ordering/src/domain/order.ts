@@ -4,6 +4,7 @@ import { DomainValidationError, InvalidOrderStateError } from './errors';
 import { Money } from './money';
 
 export type OrderStatus = 'PENDING' | 'CONFIRMED' | 'CANCELLED';
+export const MAX_ORDER_ITEM_QUANTITY = 2_147_483_647;
 
 export interface OrderItemSnapshot {
   readonly sku: string;
@@ -156,8 +157,14 @@ function validateItem(item: OrderItemSnapshot): OrderItemSnapshot {
   if (sku.length === 0 || sku.length > 100) {
     throw new DomainValidationError('sku must contain between 1 and 100 characters');
   }
-  if (!Number.isSafeInteger(item.quantity) || item.quantity <= 0) {
-    throw new DomainValidationError('quantity must be a positive safe integer');
+  if (
+    !Number.isSafeInteger(item.quantity) ||
+    item.quantity <= 0 ||
+    item.quantity > MAX_ORDER_ITEM_QUANTITY
+  ) {
+    throw new DomainValidationError(
+      `quantity must be an integer between 1 and ${MAX_ORDER_ITEM_QUANTITY}`,
+    );
   }
   if (!Number.isSafeInteger(item.unitPriceMinor) || item.unitPriceMinor < 0) {
     throw new DomainValidationError('unitPriceMinor must be a non-negative safe integer');

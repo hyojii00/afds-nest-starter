@@ -12,6 +12,7 @@ import {
   Min,
   ValidateNested,
 } from 'class-validator';
+import { MAX_ORDER_ITEM_QUANTITY } from '../domain/order';
 
 export class CreateOrderItemDto {
   @ApiProperty({ example: 'BOOK-001' })
@@ -20,10 +21,10 @@ export class CreateOrderItemDto {
   @MaxLength(100)
   sku!: string;
 
-  @ApiProperty({ example: 2, minimum: 1 })
+  @ApiProperty({ example: 2, minimum: 1, maximum: MAX_ORDER_ITEM_QUANTITY })
   @IsInt()
   @Min(1)
-  @Max(Number.MAX_SAFE_INTEGER)
+  @Max(MAX_ORDER_ITEM_QUANTITY)
   quantity!: number;
 
   @ApiProperty({ example: 2500, minimum: 0, description: 'Price in the currency minor unit' })
